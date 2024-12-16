@@ -22,7 +22,7 @@ visited = []
 visited.append(tuple((starting_i, starting_j)))
 
 def next_state(data, state):
-    ''''''
+    '''Compute next state (position and orientation)'''
     
     # Compute candidate new location 
     i, j = state[0] + state[2][0], state[1] + state[2][1]
@@ -75,25 +75,28 @@ In the solution method used, requires same state (location and motion direction)
 '''
 
 '''
+print("\nPart 2:")
 obstacle_locs = []
 
 for i in range(n_rows):
     for j in range(n_cols):
 
-        print(f"(i, j) = ({i}, {j})")
+        print(f"\n(i, j) = ({i}, {j})")
 
         # Exclude initial position of guard as prompted in the clue:
         if i == starting_i and j == starting_j:
             continue
-
-        new_data = data.copy()
+        
+        new_data = [x[:] for x in data]
 
         # Check value - if an obstacle already, won't result in cycle since none arose in Part 1
         if new_data[i][j] == '#':
+            print("## Obstacle ##")
             continue
         else:
             #Modify value to be an obstacle
             new_data[i][j] = "#"
+            #print(new_data)
         
         # Initialize the guard's location and direction
         state = [starting_i, starting_j, (-1, 0)]
@@ -115,40 +118,59 @@ for i in range(n_rows):
                 state_list.append(state.copy())
         
 p2 = len(obstacle_locs)
-'''
 
+'''
 
 p2 = 0
 
-#for n in [0]:
-for n in range(len(visited)):
-    
-    print(f"\n{n} of {len(visited)}")
+print(f"Starting location: ({starting_i}, {starting_j})")
+print("\nVisited:")
+print(visited)
 
-    new_data = data.copy()
-    new_data[visited[n][0]][visited[n][1]] = "#"
+looping_locs = []  # list of tuple locations where placing an obstacle results in a looping trajectory
 
-    state = [starting_i, starting_j, (-1, 0)]
-    state_list = [state.copy()]
-    #print(state_list)
+# Check subset of visited
+#visited = [(8, 3)]
 
-    while True:
-        state = next_state(new_data, state.copy())
-        #print(state) 
+#for n in range(len(visited)):
+for i in range(n_rows):
+
+    for j in range(n_cols):
+
+        #print(f"\n** Checking {visited[n]}  ({n + 1} of {len(visited)})")
+        print(f"\nLoop:  ({i}, {j})") 
+        # Make a deep copy (i.e. not linked to original)
+        new_data = [x[:] for x in data]
         
-        if state == False:
-            print("Reached edge of map")
-            break
-        elif state in state_list:
-            print("Looping")
-            #print(state)
-            #print(state_list)
-            p2 += 1
-            break
+        # Check location is not 
+        if new_data[i][j] = "#":
+            print("Already a '#'.")
+            continue
         else:
-            state_list.append(state)
-        #print(state_list)
-        #print(len(state_list))
+            new_data[i][j] = "#"
 
+        state = [starting_i, starting_j, (-1, 0)]
+        state_list = [state.copy()]
+
+        while True:
+            state = next_state(new_data, state.copy())
+        
+            if state == False:
+                print("Exiting map.")
+                break
+            elif state in state_list:
+                print("ooo  Looping  ooo")
+                #print(state)
+                #print(state_list)
+                #looping_locs.append(tuple((visited[n][0], visited[n][1])))
+                looping_locs.append(tuple((i, j)))
+                p2 += 1
+                break
+            else:
+                state_list.append(state)
+
+print("Obstacle locations causing looping:")
+print(looping_locs)
+print(len(looping_locs))
 
 print(f"{'Solution to Part 2:':<20} {p2}")
