@@ -21,6 +21,8 @@ for r in range(R):
         if G[r][c] == '^':
             sr,sc = r,c
 
+obstacle = []
+
 # Loops are over potential locations of obstacle to cause looping
 for o_r in range(R):
     for o_c in range(C):
@@ -35,6 +37,11 @@ for o_r in range(R):
             # Check if configuration has previously existed
             if (r,c,d) in SEEN:
                 p2 += 1
+                
+                obstacle.append(tuple((o_r, o_c)))
+                SEEN.add((r,c,d))
+                SEEN_RC.add((r,c))
+
                 break
             
             # If loop is not broken at previous step, add state to previous
@@ -62,3 +69,5 @@ for o_r in range(R):
                 c = cc
 pr(p1)
 pr(p2)
+
+print(obstacle) 

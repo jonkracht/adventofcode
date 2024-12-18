@@ -143,7 +143,7 @@ for i in range(n_rows):
         new_data = [x[:] for x in data]
         
         # Check location is not 
-        if new_data[i][j] = "#":
+        if new_data[i][j] == "#":
             print("Already a '#'.")
             continue
         else:
@@ -172,5 +172,5 @@ for i in range(n_rows):
 print("Obstacle locations causing looping:")
 print(looping_locs)
 print(len(looping_locs))
-
 print(f"{'Solution to Part 2:':<20} {p2}")
+print(looping_locs)
