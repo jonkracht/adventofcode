@@ -1,6 +1,6 @@
 import sys
 
-infile = sys.argv[1] if len(sys.argv)>=2 else './data/12.in3'
+infile = sys.argv[1] if len(sys.argv)>=2 else './data/12.in2'
 
 raw = open(infile).read().strip()
 
@@ -107,54 +107,85 @@ print(f"{'Solution to Part 1:':<20} {p1}")
 
 # Part 2:
 
+def find_exterior_points(L: list):
+    """"""
+
+    exterior_pts = []
+
+    for pt in L:
+        if count_neighbors(pt[0], pt[1], L) != 4:
+            exterior_pts.append(pt)
+
+    return exterior_pts
+
+
+def order_points(O: list, U: list):
+    """Order a list of points using recursion"""
+
+    print(f"U is {U}")
+    if len(U) == 0:
+        print(f"\nORDERED! : {O}")
+        final.append(O)
+        return O
+
+    else:
+        # Find candidate next points for ordering
+        C = []
+        
+        #print(f"O is {O}")
+        #print(f"U is {U}")
+
+        for i, u in enumerate(U):
+            if abs(O[-1][0] - u[0]) + abs(O[-1][1] - u[1]) < 3:
+                C.append(i)
+        
+        #print(C)
+
+        # Iterate over candidate next points
+        if len(C) > 0:
+            for c in C:
+
+                Q = O.copy()
+                Q.append(U[c])
+                #print(f"Modified O is {Q}")
+
+                X = U.copy()
+                X.pop(c)
+                #print(f"Modified U is {X}")
+
+                return order_points(Q, X)
+        else:
+            return False
+
+
+
+
 def compute_sides(L: list):
     """Takes list of points making up a region and returns number of sides."""
    
     print(f"\nRegion:\n{L}")
 
-    # Create a list of points that are midpoints of cell edges
-    edges = []
-
-    for l in L:
-        edges.append((l[0] - 0.5, l[1]))
-        edges.append((l[0], l[1] + 0.5))
-        edges.append((l[0] + 0.5, l[1]))
-        edges.append((l[0], l[1] - 0.5))
-
-    print(f"Edges:  {edges}")
-    
-    # Find edges exterior to the region (i.e. only appear once)
-    exterior = set(edges)
-    print(f"Exterior: {exterior}")
-
-    # Travel around perimeter clockwise
-    unorder = list(exterior)
-    order = [unorder[0]]
-    unorder.pop(0)
-
-    print(f"\nUnordered:  {unorder}")
-    print(f"Ordered: {order}")
-
-    
-    # Find possible next points
-    candidates = []
-    for u in unorder:
-        if int(abs(order[0][0] - u[0]) + abs(order[0][1] - u[1])) == 1:
-            candidates.append(u)
-
-    print(f"Candidates:  {candidates}")
-
-        
-
-
     sides = 0
+    
+    # Determine which points are on the exterior of the region
+    exterior_points = find_exterior_points(L)
+    print(f"\nExterior:\n{exterior_points}")
+
+    # Order exterior points
+    order = []
+    order.append(exterior_points[0])
+    exterior_points.pop(0)
+   
+    final = []
+    ordered_pts = order_points(order, exterior_points)
+    print(f"Ordered points:  {final}")
+
     return sides
 
 
 price2 = 0
 
 for k, v in regions.items():
-    print(f"\nRegion {k}:")
     for vv in v:
         sides = compute_sides(vv.copy())
         area = len(vv)
