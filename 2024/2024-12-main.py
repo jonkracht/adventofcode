@@ -1,12 +1,15 @@
 import sys
+import matplotlib.pyplot as plt
 
-infile = sys.argv[1] if len(sys.argv)>=2 else './data/12.in3'
+infile = sys.argv[1] if len(sys.argv)>=2 else './data/12.in4'
 
 raw = open(infile).read().strip()
 
 data = raw.split("\n")
 
-print(data)
+print(f"\nFormatted data:")
+for d in data:
+    print(d)
 
 
 def make_regions(L: list):
@@ -102,64 +105,152 @@ for k, v in regions.items():
 
 p1 = compute_price(regions)
 
-print(f"{'Solution to Part 1:':<20} {p1}")
+print(f"\n{'Solution to Part 1:':<20} {p1}")
 
 
 # Part 2:
 
-def compute_sides(L: list):
+def find_edges(L: list):
     """Takes list of points making up a region and returns number of sides."""
    
-    print(f"\nRegion:\n{L}")
+    #print(f"\nRegion:\n{L}")
 
     # Create a list of points that are midpoints of cell edges
-    edges = []
+
+    region_edges = []
 
     for l in L:
-        edges.append((l[0] - 0.5, l[1]))
-        edges.append((l[0], l[1] + 0.5))
-        edges.append((l[0] + 0.5, l[1]))
-        edges.append((l[0], l[1] - 0.5))
+        cell_edges = set()
 
-    print(f"Edges:  {edges}")
+        # Compute mid point of cell edges
+        cell_edges.add((l[0] - 0.5, l[1]))  # top
+        cell_edges.add((l[0], l[1] + 0.5))  # right
+        cell_edges.add((l[0] + 0.5, l[1]))  # bottom
+        cell_edges.add((l[0], l[1] - 0.5))  # left
+
+        # Check if edges exist in region_edges; if so remove from region and cell_edges set
+        new_edge = set()
+        for c in cell_edges:
+            exterior = True
+            for r in region_edges:
+                if c in r:
+                    r.remove(c)
+                    exterior = False
+
+            if exterior:
+                new_edge.add(c)
+
+        #print(f"Pruned cell edges:  {new_edge}")
+
+
+        # Make sure edges are still continuous
+        temp = []
+        for r in region_edges:
+
+            if len(r) < 2:
+                temp.append(r)
+            else:
+
+                split_point = -1
+
+                # Vertical edges
+                if int(r[0][0]) == r[0][0]:
+                    for i in range(len(r) - 1):
+                        diff = r[i + 1][0] - r[i][0]
+                        if diff != 1:
+                            #print(diff)
+                            split_point = i
+
+
+                # Horizontal edges
+                if int(r[0][1]) == r[0][1]:
+                    for i in range(len(r) - 1):
+                        diff = r[i + 1][1] - r[i][1]
+                        if diff != 1:
+                            #print(diff)
+                            split_point = i
+
+
+                # If a split is needed, append 
+                if split_point > -1:
+                    temp.append(r[0:split_point + 1])
+                    temp.append(r[split_point + 1:])
+                else:
+                    temp.append(r)
+
+
+        region_edges = temp.copy()
+
+
+        # Add new_edges to appropriate edge list
+        for c in new_edge:
+
+            # Vertical edges
+            if(int(c[0]) == c[0]):
+                new_edge = True
+                for r in region_edges:
+                    if (c[0] - 1, c[1]) in r and ((l[0] - 1, l[1]) in L):
+                        r.append(c)
+                        new_edge = False
+
+                if new_edge:
+                    region_edges.append([c])
+
+            # Horizontal edges
+            if (int(c[1]) == c[1]):
+                new_edge = True
+                for r in region_edges:
+                    if (c[0], c[1] - 1) in r and ((l[0], l[1] - 1) in L):
+                        r.append(c)
+                        new_edge = False
+
+                if new_edge:
+                    region_edges.append([c])
+
+            # Cleanup region edges:  remove empty entries
+            region_edges = [x for x in region_edges if len(x) > 0]
+
+            #print(f" * Current cell: {c}")
+            #print(f" * Current region edges:\n{region_edges}")    
     
-    # Find edges exterior to the region (i.e. only appear once)
-    exterior = set(edges)
-    print(f"Exterior: {exterior}")
-
-    # Travel around perimeter clockwise
-    unorder = list(exterior)
-    order = [unorder[0]]
-    unorder.pop(0)
-
-    print(f"\nUnordered:  {unorder}")
-    print(f"Ordered: {order}")
-
+    '''
+    for r in region_edges:
+        print(f"({len(r)}): {r}")
+    '''
     
-    # Find possible next points
-    candidates = []
-    for u in unorder:
-        if int(abs(order[0][0] - u[0]) + abs(order[0][1] - u[1])) == 1:
-            candidates.append(u)
-
-    print(f"Candidates:  {candidates}")
-
-        
-
-
-    sides = 0
-    return sides
-
+    return region_edges
 
 price2 = 0
+all_edges =[]
 
 for k, v in regions.items():
-    print(f"\nRegion {k}:")
+    #print(f"\nRegion {k}:")
     for vv in v:
-        sides = compute_sides(vv.copy())
+        edges = find_edges(vv.copy())
+
+        #print(edges)
+        
+        for e in edges:
+            all_edges.append(e)
+
+        #print(f"Sides: {sides}\n")
         area = len(vv)
+        sides = len(edges)
 
         price2 += sides * area
 
 print(f"{'Solution to Part 2:':<20} {price2}")
 
+'''
+print("Edges:")
+for e in all_edges:
+    print(e)
+
+# Plot
+plt.figure()
+for e in all_edges:
+    #print(e)
+    plt.plot(*zip(*e), 'x-')
+
+plt.show()
+'''
