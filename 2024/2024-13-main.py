@@ -4,7 +4,7 @@ infile = sys.argv[1] if len(sys.argv)>=2 else './data/13.in'
 
 raw = open(infile).read().strip().split("\n\n")
 
-# Parse raw data; result is nested lists whose elements are direction of first joystick, second joystick, and prize location
+# Parse raw data to make nested lists whose elements are joystick directions and prize location
 data = []
 for r in raw:
     temp = []
@@ -22,20 +22,21 @@ for r in raw:
     data.append(temp)
 
 #print(data)
-print(data[0])
+#print(data[0])
 
 
 def compute_cost(data: list, shift: int):
-    
+    """Compute cost to solve all solvable machines""" 
+
     cost = 0
 
     for d in data:
 
         A, B, P = d[0], d[1], [shift + el for el in d[2]]
 
-        #print(f"{A} {B} {P}")
+        #print(f"A:{A}, B:{B}, P:{P}")
 
-        # Obtained via some algebra
+        # Writing system of two equations in two unknowns (number of each motion require)
         numA = B[1] * P[0] - B[0] * P[1]
         numB = A[0] * P[1] - A[1] * P[0]
         den = A[0] * B[1] - A[1] * B[0]
