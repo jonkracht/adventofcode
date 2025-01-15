@@ -18,7 +18,8 @@ import sys
 # 6) Grab the value for session. Fill it in.
 
 
-SESSION = '53616c7465645f5fb1dc6895a282beff4e8cf60807d54389ac940b735c26c3fa1781e2c7229ddb84ee6c8613147f8657683125ed7c6cbdb1eb204d64a27186e9'
+#SESSION = '53616c7465645f5fb1dc6895a282beff4e8cf60807d54389ac940b735c26c3fa1781e2c7229ddb84ee6c8613147f8657683125ed7c6cbdb1eb204d64a27186e9'
+SESSION = '53616c7465645f5f02a746d34b0f0ae70dd29a2c2d6ffe48cf7682048c51abb2a8f96dcfdf37739212e1e6bdc8ad76f36de494a0a31ca71789b61269fe515248'
 useragent = 'github.com/jonkracht'
 
 parser = argparse.ArgumentParser(description='Read input')
