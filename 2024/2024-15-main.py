@@ -1,4 +1,6 @@
 import sys, copy
+import time
+
 infile = sys.argv[1] if len(sys.argv)>=2 else './data/15.in'
 
 raw = open(infile).read().strip()
@@ -254,6 +256,7 @@ def make_move_p2(move, wh, loc):
 
         return wh, loc
 
+'''
 
 warehouse2 = widen_warehouse(copy.deepcopy(warehouse))
 print("\nInitial configuration:")
@@ -270,9 +273,105 @@ robot_loc = start2
 for i, m in enumerate(moves[:]):
     print(f"\nMove {i}:")
     warehouse2, robot_loc = make_move_p2(moves[i], copy.deepcopy(warehouse2), robot_loc)
+    
     print('\n'.join([''.join(w) for w in warehouse2]))  # print warehouse
-    #input("Press enter for next iteration")
-
+    
+    input("")  # press enter to display next
+    #time.sleep(0.25)
+    
 gps2 = compute_gps(warehouse2.copy(), '[')
-print(f"{'\nSolution to Part 2:':<20} {gps2}")
+print(f"\n{'Solution to Part 2:':<20} {gps2}")
+
+'''
+
+
+# Part 2 revisited:  Use a recursive function to identify block chunks
+def able_to_move(move, wh, loc):
+    """Checks if motion is possible in a given direction."""
+
+    next_loc = (loc[0] + move[0], loc[1] + move[1])
+    next_char = wh[next_loc[0]][next_loc[1]]
+
+    if next_char == ".":
+        return True
+    
+    elif next_char == "#":
+        return False
+    
+    elif next_char == "[":
+        to_move.add((next_loc, next_char))
+        to_move.add(((next_loc[0], next_loc[1] + 1), "]"))
+
+        if move[0] == 0:  # horizontal move
+            return able_to_move(move, wh, (next_loc[0], next_loc[1] + 1))
+
+        else:  # vertical move
+            return able_to_move(move, wh, next_loc) and \
+                    able_to_move(move, wh, (next_loc[0], next_loc[1] + 1))
+    
+    elif next_char == "]":
+        to_move.add((next_loc, next_char))
+        to_move.add(((next_loc[0], next_loc[1] - 1), "["))
+
+        if move[0] == 0:  # horizontal move
+            return able_to_move(move, wh, (next_loc[0], next_loc[1] - 1))
+
+        else:  # vertical move
+            return able_to_move(move, wh, next_loc) and able_to_move(move, wh, (next_loc[0], next_loc[1] - 1))
+
+    else:
+        print(f"Unexpected character:  {next_char}")
+        return
+
+
+
+warehouse3 = widen_warehouse(copy.deepcopy(warehouse))
+vectors = {"^": (-1, 0), "v": (1, 0), "<": (0, -1), ">": (0, 1)}
+
+print("Initial warehouse configuration:")
+print('\n'.join([''.join(w) for w in warehouse3]))  # print warehouse
+
+for i, w in enumerate(warehouse3):
+    for ii, ww in enumerate(w):
+        if ww == "@":
+            robot_loc = (i, ii)
+
+for i, arrow in enumerate(moves[:]):
+    print(f"\nMove {i}:  '{arrow}'.  Robot location:  {robot_loc}.") 
+    
+    # Convert arrow character into vector
+    move = vectors[arrow]
+
+    to_move = set()
+    to_move.add((robot_loc, "@"))
+
+    if able_to_move(move, warehouse3, robot_loc):
+        print(f"Motion can be performed.  Moving {len(to_move)} items:  {to_move}")
+       
+        # Blank spaces previously occupied by boxes and robot
+        for t in to_move:
+            #print(t)
+            warehouse3[t[0][0]][t[0][1]] = "."
+
+        
+        for t in to_move:
+            warehouse3[t[0][0] + move[0]][t[0][1] + move[1]] = t[1]
+        
+        robot_loc = (robot_loc[0] + move[0], robot_loc[1] + move[1])
+        warehouse3[robot_loc[0]][robot_loc[1]] = "@"
+    
+    else:
+        print("Hit a wall.  Doing nothing")
+
+    print('\n'.join([''.join(w) for w in warehouse3]))  # print warehouse
+    input("\n(Enter to continue)")
+
+
+    
+gps2 = compute_gps(warehouse3.copy(), '[')
+print(f"\n{'Solution to Part 2:':<20} {gps2}")
+
+
+
+
 
