@@ -18,7 +18,7 @@ for r in raw.split("\n"):
 #print(data)
 
 
-def next_state(state, grid_dims):
+def compute_next_state(state, grid_dims):
     """Compute next state of the robots."""
 
     new_state = []
@@ -29,7 +29,7 @@ def next_state(state, grid_dims):
         # Add velocity to position
         new_x, new_y = pos[0] + vel[0], pos[1] + vel[1]
 
-        # Check if still in region; if not, wrap in appropriate way
+        # Check if still in region; if not, wrap in appropriate manner
         if new_x >= grid_dims[0]:
             new_x -= grid_dims[0]
         elif new_x < 0:
@@ -46,11 +46,11 @@ def next_state(state, grid_dims):
 
 
 def compute_safety_factor(state, dims):
-    """Count robots in each quadrant and multiply."""
+    """Count robots in each quadrant and multiply counts together to compute safety factor."""
 
     midx, midy = dims[0] // 2, dims[1] //2
 
-    quad_cts = 4 * [0]  # quadrant counts
+    quad_cts = 4 * [0]
 
     for s in state:
         pos = s[0]
@@ -85,7 +85,7 @@ grid_dims, t = (101, 103), 100  # actual problem
 state = data.copy()
 
 for t in range(t):
-    state = next_state(state, grid_dims)
+    state = compute_next_state(state, grid_dims)
 
 locs = []
 [locs.append(s[0]) for s in state]
@@ -133,42 +133,7 @@ def plot_grid(grid):
     return
 
 
-def is_tree_shape(grid):
-    """Takes x,y configuration of points and returns Boolean if might be a tree shape"""
-
-    # Problem statement is (probably purposely) vague so unclear which conditions to check.
-
-    is_tree = True
-
-    '''
-    Possible conditions of tree-ness:
-    * Top-left and top-right of image are blank
-    * Maybe bottom left and bottom right are also blank
-    '''
-
-    dim = (len(grid), len(grid[0]))
-    
-    # Check four corner of grid to be empty
-    check = 5
-    for i in range(check):
-        for j in range(check):
-            #print(f"{i}, {j}")
-            if grid[i][j] != 0:
-                is_tree = False
-
-            if grid[i][dim[1] - j - 1] != 0:
-                is_tree = False
-
-            if grid[dim[0] - i - 1][j] != 0:
-                is_tree = False
-
-            if grid[dim[0] - i - 1][dim[1] - j - 1] != 0:
-                is_tree = False
-    
-    return is_tree
-
-
-def centrality(state, dims):
+def compute_centrality(state, dims):
     """Compute mean horizontal spread of state."""
 
     centrality = 0
@@ -179,36 +144,37 @@ def centrality(state, dims):
     return centrality/len(state)
 
 
-state2 = data.copy()
+next_state = data.copy()
 t = 0
-min_c = 1e8
+min_centrality = 1e8
 
 while True:
 
     t += 1
     print(t)
 
-    state2 = next_state(state2.copy(), grid_dims)
-    c = centrality(state2.copy(), grid_dims)
+    next_state = compute_next_state(next_state.copy(), grid_dims)
+    
+    # Criteria to suspect that a Christmas tree is present:
+    # - assume tree shapes a more horizontally compact (though centrality measure as defined assumes shape is at or near the center of the grid - problem statement is very vague)
+    # - after doing some research, other metrics used were image entropy, number of contiguous points, non-overlapping elements
+    
+    centrality = compute_centrality(next_state.copy(), grid_dims)
 
-    if c < min_c:  # keep track of lowest centrality seen
-        min_c = c
+    if centrality < min_centrality:  # keep track of lowest centrality seen
+        min_centrality = centrality
 
-    #if is_tree_shape(grid):
-    if True:
 
-        # Assume tree shapes have less horizontal spread (though centrality measure as defined assumes shape is at or near the center of the grid - problem statement is very vague)
-
-        if c < 15:  # pick some centrality threshold to view states to see if there's a tree
+    if centrality < 15:  # pick some threshold to view states
             
-            grid = generate_grid(state2.copy(), grid_dims) 
-            plot_grid(grid)
+        grid = generate_grid(next_state.copy(), grid_dims) 
+        plot_grid(grid)
             
-            print(f"t = {t}:  c = {c}  (min_c = {min_c})")
+        print(f"t = {t}:  c = {centrality}  (min_c = {min_centrality})")
            
-            see_a_tree = input("See a tree? (y/n) ")
-            if see_a_tree == "y":
-                break
+        see_a_tree = input("See a tree? (y/n) ")
+        if see_a_tree == "y":
+            break
 
 print(f"\n{'Solution to Part 2:':<20} Took {t} seconds to see a tree.")
 
