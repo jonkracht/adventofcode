@@ -1,89 +1,90 @@
 import sys
 sys.setrecursionlimit(10**6)
-
-infile = sys.argv[1] if len(sys.argv) >= 2 else './data/16.in2'
+infile = sys.argv[1] if len(sys.argv) >= 2 else './data/16.in'
 
 raw = open(infile).read().strip()
 data = raw.split("\n")
 
-def move(route):
-    if route[-1] == finish:
-        #print(f"Found a good route: {route}")
-        good_routes.append(route)
-        return
 
-    # Try to move in each direction
-    loc = route[-1]
+# Implement Dijkstra's algorithm using Wikipedia pseudocode
+def Dijkstra(vertices, start, starting_dir):
+    '''Implement Dijkstra's algorithm with turning penalty.'''
 
-    neighbors = [(loc[0] - 1, loc[1]), (loc[0] + 1, loc[1]),
-                             (loc[0], loc[1] - 1), (loc[0], loc[1] + 1)]
-
-    for n in neighbors:
-        if n not in route and data[n[0]][n[1]] != "#":
-            next_route = route.copy()
-            next_route.append(n)
-            move(next_route)
-
-    return
-
-def score_moves(routes):
-    """Compute score of each route"""
-    scores = {}
-
-    for i, route in enumerate(routes):
-        deltas = []
-        for ii in range(len(route) - 1):
-            deltas.append((route[ii+1][0] - route[ii][0],
-                          route[ii+1][1] - route[ii][1]))
-
-        # Initial direction is defined to be up - if first move is not up, add a rotation.
-        if deltas[0] == (0, 1):
-            score = 0
+    # Initialize graph
+    graph = []
+    for v in vertices:
+        # Format:  location tuple, has_been_seen Boolean,
+        # motion direction, score/distance, previous location tuple
+        if v == start:
+            graph.append([v, False, starting_dir, 0, ""])
         else:
-            score = 1000
+            graph.append([v, False, "", 1e8, ""])
 
-        for ii in range(len(deltas)):
-            if deltas[ii] == deltas[ii - 1]:
-                score += 1
-            else:
-                score += 1001
+    while sum([g[1] == False for g in graph]) > 0:
+        # Find "nearest" point
+        min_dist = 1e8
+        for i, g in enumerate(graph):
+            if g[1] == False and g[3] < min_dist:
+                min_dist, min_idx = g[3], i
 
-        scores[i] = (score, route)
+        graph[min_idx][1] = True
+        nearest_vertex = graph[min_idx]
+        #print(nearest_vertex)
 
-    return scores
+        # Find un-seen neighbors of "nearest_vertex"
+        for g in graph:
+            distance = (nearest_vertex[0][0] - g[0][0], nearest_vertex[0][1] - g[0][1])
+            if g[1] == False and distance in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
+                if distance == nearest_vertex[2]:
+                    alt = nearest_vertex[3] + 1
+                else:
+                    alt = nearest_vertex[3] + 1001
+
+                if alt < g[3]:
+                    g[2] = distance
+                    g[3] = alt
+                    g[4] = nearest_vertex[0]
+
+    return graph
 
 
-# Find starting and ending indices
+
+
+# Parse data in list of vertices, start and finish
+vertices = []
 for i, row in enumerate(data):
     for ii, val in enumerate(row):
-        if val == "S":
-            start = (i, ii)
-        elif val == "E":
-            finish = (i, ii)
+        if val != "#":
+            vertices.append((i, ii))
+            if val == "S":
+                start = (i, ii)
+            elif val == "E":
+                finish = (i, ii)
 
-good_routes = []
-route = [start]
+starting_direction = (0, 1)  # problem states that begin facing east
 
-move(route)
+print(f"Input file:  '{infile}'")
+print(f"Dimensions:  ({len(data)}, {len(data[0])})")
+print(f"Start {start}, finish {finish}")
 
-print(f"\n{len(good_routes)} routes found through maze.")
+result = Dijkstra(vertices, start, starting_direction)
 
-scores = score_moves(good_routes)
+# Construct shortest path:
+shortest = []
+u = finish
+while True:
+    for r in result:
+        if r[0] == u:
+            shortest.append(r)
+            u = r[4]
+            break
 
-best_routes, best_score = [], 1e6
-for key, val in scores.items():
-    #print(f"{key}: length {len(val[1])}, score {val[0]}")
-    #print(val[1])
+    if u == '':
+        break
 
-    if val[0] == best_score:
-        best_routes.append(val[1])
-    elif val[0] < best_score:
-        best_score = val[0]
-        best_routes = [val[1]]
+for s in shortest[::-1]:
+    print(f"{s[0]}:  {s[3]}")
 
+print(f"\n{'Solution to Part 1:':<20} {shortest[0][3]}")
 
-print(f"\n{len(best_routes)} routes have lowest score of {best_score}.")
-[print(b) for b in best_routes]
-
-print(f"\n{'Solution to Part 1:':<20} {best_score}")
 #print(f"{'Solution to Part 2:':<20} {p2}")
