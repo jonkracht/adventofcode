@@ -8,42 +8,61 @@ data = raw.split("\n")
 
 # Implement Dijkstra's algorithm using Wikipedia pseudocode
 def Dijkstra(vertices, start, starting_dir):
-    '''Implement Dijkstra's algorithm with turning penalty.'''
+    """Implement Dijkstra's algorithm with turning penalty."""
 
-    # Initialize graph
-    graph = []
-    for v in vertices:
-        # Format:  location tuple, has_been_seen Boolean,
-        # motion direction, score/distance, previous location tuple
-        if v == start:
-            graph.append([v, False, starting_dir, 0, ""])
+    # Define a dictionary for direction
+    motions = {0: (0, 1), 1: (1, 0), 2: (0, -1), 3: (-1, 0)}
+
+    # Find key of "starting_dir"
+    result = [key for key, val in motions.items() if val == starting_dir]
+
+    graph = {}
+    graph[(start[0], start[1], result[0])] = [False, 0, ""]
+
+    while sum([g[0] == False for g in graph.values()]):
+
+        # Find vertex with lowest score
+        min_score = 1e8
+        for k, v in graph.items():
+            if v[0] == False and v[1] < min_score:
+                key, min_score = k, v[1]
+
+        current_state = key
+        graph[key][0] = True
+
+        # Attempt to move straight
+        next_loc = (current_state[0] + motions[current_state[2]][0], current_state[1] + motions[current_state[2]][1])
+        score = graph[key][1] + 1
+
+        if next_loc in vertices:
+            next_state = (next_loc[0], next_loc[1], current_state[2])
+            if next_state in graph.keys():
+                if score < graph[next_state][1]:
+                    graph[next_state] = [False, score, current_state]
+            else:
+                graph[next_state] = [False, score, current_state]
+
+        # Clockwise
+        score = graph[key][1] + 1000
+        next_state = (current_state[0], current_state[1], (current_state[2] + 1) % 4)
+        if next_state in graph.keys():
+            if score < graph[next_state][1]:
+                graph[next_state][1] = score
         else:
-            graph.append([v, False, "", 1e8, ""])
+            graph[next_state] = [False, score, current_state]
 
-    while sum([g[1] == False for g in graph]) > 0:
-        # Find "nearest" point
-        min_dist = 1e8
-        for i, g in enumerate(graph):
-            if g[1] == False and g[3] < min_dist:
-                min_dist, min_idx = g[3], i
+        # Counter-clockwise
+        next_state = (current_state[0], current_state[1], (current_state[2] + 3) % 4)
+        if next_state in graph.keys():
+            if score < graph[next_state][1]:
+                graph[next_state][1] = score
+        else:
+            graph[next_state] = [False, graph[key][1] + 1000, current_state]
 
-        graph[min_idx][1] = True
-        nearest_vertex = graph[min_idx]
-        #print(nearest_vertex)
 
-        # Find un-seen neighbors of "nearest_vertex"
-        for g in graph:
-            distance = (nearest_vertex[0][0] - g[0][0], nearest_vertex[0][1] - g[0][1])
-            if g[1] == False and distance in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
-                if distance == nearest_vertex[2]:
-                    alt = nearest_vertex[3] + 1
-                else:
-                    alt = nearest_vertex[3] + 1001
+        #print(graph)
 
-                if alt < g[3]:
-                    g[2] = distance
-                    g[3] = alt
-                    g[4] = nearest_vertex[0]
+
 
     return graph
 
@@ -69,22 +88,30 @@ print(f"Start {start}, finish {finish}")
 
 result = Dijkstra(vertices, start, starting_direction)
 
-# Construct shortest path:
-shortest = []
-u = finish
-while True:
-    for r in result:
-        if r[0] == u:
-            shortest.append(r)
-            u = r[4]
-            break
+# Find route that reach finish with lowest score
+best = 1e8
+for k, v in result.items():
+    x, y, d = k
+    if (x, y) == finish:
+        print(f"{k}:  {v}")
+        if v[1] < best:
+            best, best_key = v[1], k
 
-    if u == '':
+'''
+print("Shortest route:")
+shortest_route = [best_key]
+
+while True:
+    _, score, previous = result[shortest_route[-1]]
+    shortest_route.append(previous)
+
+    x, y, d = shortest_route[-1]
+    if (x, y) == start:
         break
 
-for s in shortest[::-1]:
-    print(f"{s[0]}:  {s[3]}")
-
-print(f"\n{'Solution to Part 1:':<20} {shortest[0][3]}")
+for s in shortest_route[::-1]:
+    print(s)
+'''
+#print(f"\n{'Solution to Part 1:':<20} {shortest[0][3]}")
 
 #print(f"{'Solution to Part 2:':<20} {p2}")
