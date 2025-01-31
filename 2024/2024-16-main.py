@@ -17,7 +17,7 @@ def Dijkstra(vertices, start, starting_dir):
     result = [key for key, val in motions.items() if val == starting_dir]
 
     graph = {}
-    graph[(start[0], start[1], result[0])] = [False, 0, ""]
+    graph[(start[0], start[1], result[0])] = [False, 0, []]
 
     while sum([g[0] == False for g in graph.values()]):
 
@@ -38,9 +38,11 @@ def Dijkstra(vertices, start, starting_dir):
             next_state = (next_loc[0], next_loc[1], current_state[2])
             if next_state in graph.keys():
                 if score < graph[next_state][1]:
-                    graph[next_state] = [False, score, current_state]
+                    graph[next_state] = [False, score, [current_state]]
+                elif score == graph[next_state][1]:
+                    graph[next_state][2].append(current_state)
             else:
-                graph[next_state] = [False, score, current_state]
+                graph[next_state] = [False, score, [current_state]]
 
         # Clockwise
         score = graph[key][1] + 1000
@@ -48,21 +50,20 @@ def Dijkstra(vertices, start, starting_dir):
         if next_state in graph.keys():
             if score < graph[next_state][1]:
                 graph[next_state][1] = score
+            elif score == graph[next_state][1]:
+                graph[next_state][2].append(current_state)
         else:
-            graph[next_state] = [False, score, current_state]
+            graph[next_state] = [False, score, [current_state]]
 
         # Counter-clockwise
         next_state = (current_state[0], current_state[1], (current_state[2] + 3) % 4)
         if next_state in graph.keys():
             if score < graph[next_state][1]:
                 graph[next_state][1] = score
+            elif score == graph[next_state][1]:
+                graph[next_state][2].append(current_state)
         else:
-            graph[next_state] = [False, graph[key][1] + 1000, current_state]
-
-
-        #print(graph)
-
-
+            graph[next_state] = [False, graph[key][1] + 1000, [current_state]]
 
     return graph
 
@@ -88,30 +89,59 @@ print(f"Start {start}, finish {finish}")
 
 result = Dijkstra(vertices, start, starting_direction)
 
-# Find route that reach finish with lowest score
-best = 1e8
+# Find state(s) whose location is "finish" with lowest scores
+best_score = 1e8
+end_states = []
+
 for k, v in result.items():
-    x, y, d = k
-    if (x, y) == finish:
-        print(f"{k}:  {v}")
-        if v[1] < best:
-            best, best_key = v[1], k
+    row, col, dir = k
+    _, score, previous = v
 
-'''
-print("Shortest route:")
-shortest_route = [best_key]
+    if (row, col) == finish:
+        if score < best_score:
+            best_score = score
+            end_states.append(((row, col, dir), score, previous))
 
-while True:
-    _, score, previous = result[shortest_route[-1]]
-    shortest_route.append(previous)
+print(f"\n{len(end_states)} unique end states:\n{end_states}")
 
-    x, y, d = shortest_route[-1]
-    if (x, y) == start:
-        break
 
-for s in shortest_route[::-1]:
-    print(s)
-'''
-#print(f"\n{'Solution to Part 1:':<20} {shortest[0][3]}")
+print(f"\n{'Solution to Part 1:':<20} {end_states[0][1]}")
+#print(best_keys)
 
-#print(f"{'Solution to Part 2:':<20} {p2}")
+# Part 2:  Find number of tiles that a "best" path travels through
+unique_tiles = set()
+branch_count = 0
+for e in end_states:
+    state, score, previous = e
+    route = [state, previous[0]]
+    branches = []
+    branch_count += 1
+
+    while True:
+        # Find next state:
+        #print(branches)
+        _, _, pp = result[route[-1]]
+
+        if pp == []:
+            if len(branches) == 0:
+                break
+            else:
+                pp = [branches.pop(0)];
+
+
+        for i, ppp in enumerate(pp):
+            if i == 0:
+                route.append(ppp)
+            else:
+                branches.append(ppp)
+                branch_count += 1
+
+
+    for r in route:
+        x, y, dir = r
+        unique_tiles.add((x, y))
+
+p2 = len(unique_tiles)
+print(f"\n{'Solution to Part 2:':<20} {p2}")
+
+print(f"{branch_count} unique routes exist that produce this score")
