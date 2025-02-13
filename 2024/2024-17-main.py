@@ -1,7 +1,5 @@
 import sys
 import numpy as np
-from scipy.optimize import minimize
-import itertools
 
 infile = sys.argv[1] if len(sys.argv)>=2 else './data/17.in'
 
@@ -15,6 +13,7 @@ register = []
 for r in registers:
     register.append(int(r.split(": ")[1]))
 
+print("\n*** Part 1 ***")
 print(f"\nInitial register:  {register}")
 
 program = []
@@ -25,7 +24,7 @@ print(f"Program:  {program}")
 
 
 def update(inst: tuple, reg: tuple):
-    """Perform operations and return updated registers and output."""
+    """Perform operations and return updated registers, output, and pointer."""
 
     #print(f"Inside function:  {inst}")
 
@@ -52,7 +51,8 @@ def update(inst: tuple, reg: tuple):
             pointer = operand
 
     elif code == 4:
-        b = b ^ c
+        #b = b ^ c
+        b = np.bitwise_xor(b, c)
 
     elif code == 5:
         output = str(combo[operand] % 8)
@@ -68,26 +68,25 @@ def update(inst: tuple, reg: tuple):
         print(f"Unexpected code:  {code}")
         return
 
-
+    #print(f"[{a}, {b}, {c}]:  {output}")
+    
     return (a, b, c), output, pointer
 
 
 def run_program(prog, reg):
-    """"""
+    """Execute the program."""
 
     output = []
     p = 0  # pointer indication location in program list
 
     while True:
 
-        if p >= len(prog):
+        if p >= len(prog):  # stop when pointer reaches end
             break
-
-        #print(f"\np = {p}, program:  ({prog[p]}, {prog[p + 1]}), register = {reg}, output:  {output}")
 
         reg, out, pointer = update((prog[p], prog[p + 1]), reg)
     
-        if out != "":
+        if out != "":  # exclude trivial output
             output.append(out)
 
         if pointer  == "":
@@ -95,80 +94,108 @@ def run_program(prog, reg):
         else:
             p = pointer
 
-        #input()
-
     return output
 
 
-# Part 1:  Determine output for given program and register state
+# Part 1:  Determine output for given program and inital register
 p1 = ','.join(run_program(program, register))
 print(f"\n{'Solution to Part 1:':<20}\n{p1}")
 
 
 
+# Part 2:  Find starting value of register A that produces output identical to the program
 
-
-# Part 2:  Find starting value of register A whose output is identical to the program
-
-#a = 100000000200000  # starting point
-#a = 100000007000000  # ran til around
-
-
+print("\n*** Beginning Part 2 ***\n")
 
 
 '''
-## Optimization
-def compute_error(a):
-
-    output = run_program(program, (int(a), 0, 0))
-
-    error = 0
-    for o, p in itertools.zip_longest(output, program, fillvalue=0):
-        error += (int(o) - int(p)) ** 2
-
-    return error
-
-
-#a0 = 100000007000000
-a0 = 10000000000000
-res = minimize(compute_error, a0, method='nelder-mead',
-               options={'xatol': 1e-8, 'disp': True})
-
-print(res.x)
-
+Method 1:  Brute force search
+* Looking at printed output for small values of A, recognized number of digits printed increased when a new power of 8 was crossed
+* For the output to match the 16-digit input, initial register must be between 8^15 and 8^16.
+* Used a brute force method to find regions where matched the first few most significant digits.
+* Initially used large step to quick sample region
+* As additional digits align, reduce step size.
+* Luckily, eventually found first match.
 '''
 
-
-
-## Brute force search
-#a = 16316996450914
-#a = 100000
-a = 1
-
-m = {}
+'''
+a = 8**15
+step = 1  # begin large until right-most digits match and reduce/hope 
 
 while True:
-    a += 1
+
+    print(f"\na = {a}")
 
     output = [int(r) for r in run_program(program, (a, 0, 0))]
+    
+    print(program)
+    print(output)
+    
+    # Save output in a dictionary
 
-    #print(f"a = {a}:  {output}")
-    #print(f"             {program}")
-
-    m[a] = int(''.join([str(o) for o in output]))
-
-    if output == program or a == 100000:
+    if output == program:
         break
 
-for k, v in m.items():
-    print(f"{k}:  {v}")
+    a += step
+'''
 
-#print(f"\nSolution is: {a}")
+'''
+Method 2:  Solve using octal representation and recursive search
+* Observe that last digit output (right-most) is determined only by left-most digit in the octal representation of A
+* Match the digit(s)
+* Proceed to next digit and find possible matches.
+* Repeat.
+'''
+
+def solve(seq: str):
+    """Recursive solver."""
+
+    digit = -(len(seq) + 1)  # determine which digit is being solved for
+
+    if len(seq) == len(program): # add sequence to solution list if appropriate length
+        solutions.append(seq)
+        return True
+
+    for n in range(8):
+
+        new_seq = seq + str(n)
+
+        # Convert candidate new sequence to base 10 and execute program excluding recursion step (3, 0)
+        output = int(run_program(program[:-2], (int(new_seq, 8), 0, 0))[0])
+        
+        if output == program[digit]:
+
+            seq += str(n)
+            if solve(seq) == False:
+                seq = seq[:-1]
+
+            '''
+            # Commented out to return all solutions, not just first found (i.e. smallest)
+            else:
+                return True
+            '''
+
+    return False
 
 
+solutions = []
+solve('')
 
+# Display solutions
+d = dict((s, int(s, 8)) for s in solutions)
 
-#print(program)
-#print(run_program(program, (117440, 0, 0)))
+print(f"{len(d)} solutions found.")
+print(f"\n{40*'-'}\n{'Octal':<20}Decimal\n{40*'-'}")
+for k, v in d.items():
+    print(f"{k:<20}{v}")
 
-#print(f"{'Solution to Part 2:':<20} {a}")
+print(f"\nPart 2 answer:\nMinimum value is:")
+min_val = min(d.keys())
+print(f"{min_val} (oct)")
+print(f"{d[min_val]}  (dec)")
+
+# Double check
+val = 110475839891866
+print(f"\nProgram is:\n{program}")
+print(f"\nChecking {val}.  Output is:")
+print([int(s) for s in run_program(program, (val, 0, 0))])
