@@ -2,7 +2,6 @@ import sys
 import numpy as np
 
 infile = sys.argv[1] if len(sys.argv)>=2 else './data/17.in'
-
 raw = open(infile).read().split("\n")
 
 # Parse input
@@ -26,14 +25,12 @@ print(f"Program:  {program}")
 def update(inst: tuple, reg: tuple):
     """Perform operations and return updated registers, output, and pointer."""
 
-    #print(f"Inside function:  {inst}")
-
     code, operand = inst
     a, b, c = reg
 
     output, pointer = "", ""
 
-    # Handle non-literal operand values
+    # Handle combo operands
     combo = {0: 0, 1: 1, 2: 2, 3: 3, 4: a, 5: b, 6: c}
 
     if code == 0:
@@ -78,7 +75,6 @@ def run_program(prog, reg):
     p = 0  # pointer indication location in program list
 
     while True:
-
         if p >= len(prog):  # stop when pointer reaches end
             break
 
@@ -147,10 +143,12 @@ Method 2:  Solve using octal representation and recursive search
 # Others' program inputs:
 #program = [2,4,1,2,7,5,4,1,1,3,5,5,0,3,3,0]  # solution:  37221261688308
 #program = [2,4,1,7,7,5,0,3,4,4,1,7,5,5,3,0]  # solution:  267265166222235
+#program = [2,4,1,2,7,5,4,5,1,3,5,5,0,3,3,0]  # solution:  37221270076916
+#program = [2,4,1,2,7,5,0,3,1,7,4,1,5,5,3,0]  # solution:  190615597431823
 
 
 def solve(seq: str):
-    """Recursive solver."""
+    """Recursive solver"""
 
     digit = -(len(seq) + 1)  # determine which digit is being solved for
 
@@ -158,16 +156,14 @@ def solve(seq: str):
         solutions.append(seq)
         return True
 
-
     for n in range(8):
-
         new_seq = seq + str(n)
 
         # Convert candidate new sequence to base 10 and execute program excluding recursion step (3, 0)
         output = int(run_program(program[:-2], (int(new_seq, 8), 0, 0))[0])
         
         if output == program[digit]:
-            solve(seq + str(n))
+            solve(new_seq)
 
     return False
 
@@ -183,14 +179,15 @@ print(f"\n{40*'-'}\n{'Octal':<20}Decimal\n{40*'-'}")
 for k, v in d.items():
     print(f"{k:<20}{v}")
 
-print(f"\nPart 2 answer:\nMinimum value is:")
+print(f"\n*** Part 2 answer ***\nMinimum value is:")
 min_val = min(d.keys())
 print(f"{min_val} (oct)")
 print(f"{d[min_val]}  (dec)")
 
-
+'''
 # Double check a value
 val = 110475839891866
 print(f"\nProgram is:\n{program}")
 print(f"\nChecking {val}.  Output is:")
 print([int(s) for s in run_program(program, (val, 0, 0))])
+'''
