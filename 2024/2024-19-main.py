@@ -1,4 +1,4 @@
-import sys
+import sys, copy
 
 infile = sys.argv[1] if len(sys.argv)>=2 else './data/19.in'
 
@@ -7,41 +7,54 @@ raw = open(infile).read().strip()
 pieces, whole = raw.split('\n\n')
 
 pieces = [p.strip() for p in pieces.split(',')]
-#print(pieces)
+print(f"\nPieces:\n{pieces}")
 
 whole = whole.split('\n')
-#print(whole)
+print(f"\nWhole:\n{whole}")
 
-answers = {}
 
-def solve(partials: list, word: str):
-    
-    #print(f"\nSolve called with: {partials}")
+def solve(state: list, goal: str, part_1: bool):
+    """"""   
+    print(f"{len(''.join(state))}  {len(answers[goal])}")
 
-    temp = ''.join(partials)
-    if temp == word:
-        answers[word].append(partials)
-        return True
-    
-    if len(temp) > len(word):
+     # Truncate search to only find one solution
+    if part_1 and len(answers[goal]) > 0:
         return False
+
+    temp = ''.join(state)
     
-    char = len(partials)
+    if len(temp) == len(goal):
+        if temp == goal:
+            if state in answers[goal]:
+                print(state)
+                input()
+            else:
+                answers[goal].append(state)
+                print(temp)
+                print(goal)
+                print(state)
+                #input()
+            
+            return True
+        
+        else:
+            return False
+
+    elif len(temp) > len(goal):
+        return False
 
     for p in pieces:
-        #print(f"Checking {p}")
-        test = ''.join(partials) + p
-        #print(f"Fragment so far:  {test}")
-        if word[:len(test)] == test:
-            new = partials.copy()
+        test = ''.join(state) + p
+        if goal[:len(test)] == test:
+            new = copy.deepcopy(state)
             new.append(p)
-            #print(f"Matches.  Calling solve with: {new}")
-            #print(new)
-            solve(new, word)
+            solve(new, goal, part_1)
         
 
     return False
 
+
+answers = {}
 
 print(f"\n*** Beginning Part 1 ***\n")
 for w in whole:
@@ -49,11 +62,14 @@ for w in whole:
     answers[w] = []
 
     a = []
-    solve(a, w)
+    solve(a, w, False)
 
 ct = 0
+
+
+print("\nCombinations to create words")
 for k, v in answers.items():
-    print(f"{k}:  {v}")
+    #print(f"{k}:  {v}")
     if len(v) > 0:
         ct += 1
 
