@@ -4,74 +4,52 @@ infile = sys.argv[1] if len(sys.argv)>=2 else './data/19.in'
 
 raw = open(infile).read().strip()
 
-pieces, whole = raw.split('\n\n')
+d, s = raw.split('\n\n')
 
-pieces = [p.strip() for p in pieces.split(',')]
-print(f"\nPieces:\n{pieces}")
+dictionary = [dd.strip() for dd in d.split(',')]
+print(f"\nDictionary:\n{dictionary}")
 
-whole = whole.split('\n')
-print(f"\nWhole:\n{whole}")
+strings = s.split('\n')
+print(f"\nStrings to assemble:\n{strings}")
 
 
-def solve(state: list, goal: str, part_1: bool):
-    """"""   
-    print(f"{len(''.join(state))}  {len(answers[goal])}")
+def ways(s: str):
+    """Compute number of ways string can be formed from dictionary words using dynamic programming (memoization)."""
 
-     # Truncate search to only find one solution
-    if part_1 and len(answers[goal]) > 0:
-        return False
+    #print(f"\nWays called with '{s}'.")
 
-    temp = ''.join(state)
-    
-    if len(temp) == len(goal):
-        if temp == goal:
-            if state in answers[goal]:
-                print(state)
-                input()
-            else:
-                answers[goal].append(state)
-                print(temp)
-                print(goal)
-                print(state)
-                #input()
+    # Base case (simply lookup states previously computed)
+    if s in seen:
+        #print(f"Previously seen:  {s}")
+        return seen[s]
+
+    counts[s] = 0
+
+    # Check beginning of against dictionary
+    for d in dictionary:
+        if d == s[:len(d)]:
             
-            return True
-        
-        else:
-            return False
+            #print(f"Match found:  {d}")
+            
+            if len(d) != len(s):
+                counts[s] += ways(s[len(d):])
+            
+            else:
+                counts[s] += 1
 
-    elif len(temp) > len(goal):
-        return False
+    seen[s] = counts[s]
 
-    for p in pieces:
-        test = ''.join(state) + p
-        if goal[:len(test)] == test:
-            new = copy.deepcopy(state)
-            new.append(p)
-            solve(new, goal, part_1)
-        
-
-    return False
+    return counts[s]
 
 
-answers = {}
+seen, counts, unique_ways = dict(), dict(), dict()
 
-print(f"\n*** Beginning Part 1 ***\n")
-for w in whole:
-    print(f"\nSolving for:  {w}")
-    answers[w] = []
+for s in strings:
+    #print(f"\nConstructing '{w}'\n")
+    unique_ways[s] = ways(s)
 
-    a = []
-    solve(a, w, False)
+p1 = sum([x != 0 for x in unique_ways.values()])
+p2 = sum([x for x in unique_ways.values()])
 
-ct = 0
-
-
-print("\nCombinations to create words")
-for k, v in answers.items():
-    #print(f"{k}:  {v}")
-    if len(v) > 0:
-        ct += 1
-
-print(f"\n{'Solution to Part 1:':<20} {ct}")
-#print(f"{'Solution to Part 2:':<20} {p2}")
+print(f"\n{'Solution to Part 1:':<20} {p1}")
+print(f"{'Solution to Part 2:':<20} {p2}")
