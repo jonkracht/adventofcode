@@ -16,6 +16,8 @@ print(f"\nStrings to assemble:\n{strings}")
 def ways(s: str):
     """Compute number of ways string can be formed from dictionary words using dynamic programming (memoization)."""
 
+    # Loosely based on:  https://people.seas.harvard.edu/~cs125/fall16/lec5.pdf
+
     #print(f"\nWays called with '{s}'.")
 
     # Base case (simply lookup states previously computed)
