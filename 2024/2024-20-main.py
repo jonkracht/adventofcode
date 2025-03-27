@@ -5,7 +5,7 @@ infile = sys.argv[1] if len(sys.argv)>=2 else './data/20.in'
 maze = open(infile).read().strip().split('\n')
 
 nrows, ncols = len(maze), len(maze[0])
-O, V = set(), set()
+O, V = set(), set()  # obstacles, vertices in graph
 inf = 1000000
 
 for i in range(nrows):
@@ -22,10 +22,9 @@ for i in range(nrows):
 
 
 def dijkstra(vertices: set, start_point: tuple, start_dist: int, previous_point: tuple, extra: tuple) -> dict:
-    """"""
+    """Compute shortest distances between points in a graph."""
 
-    graph = {}
-    heap = {}
+    graph, heap = {}, {}
     heap[start_point] = [start_dist, previous_point]
 
     if len(extra) > 0:
@@ -55,68 +54,63 @@ def dijkstra(vertices: set, start_point: tuple, start_dist: int, previous_point:
 
     return graph
 
+# Create two graphs:  one of distances from each point to 'start' and the other to 'end'
+forward_graph = dijkstra(V.copy(), start, 0, '', ())
+backward_graph = dijkstra(V.copy(), end, 0, '', ())
 
-# Solve maze without any cheats
-og = dijkstra(V.copy(), start, 0, '', ())
-orig_dist = og[end][0]
-print(orig_dist)
+original_score = forward_graph[end][0]  # solution of the un-modified maze
 
-# Construct route by backtracking via previous_pt
-route = [[end, og[end][0], og[end][1]]]
-while route[-1][2] != '':
-    previous = route[-1][2]
-    route.append([previous, og[previous][0], og[previous][1]])
+print("\nSolved original maze in both forward and backward directions.")
+print(f"Best distance/time is:  {original_score}")
 
-route = route[::-1]
 
-cheats = {}
-for i, pt in enumerate(route):
-    #print(f"\n*** Checking {pt} ***")
+def find_cheats(fg: dict, bg: dict, cheat_size: int, base_score: int):
+    """Identify cheats that reduce the distance/time."""
 
-    VV = V.copy()
-    r, c = pt[0]
+    cheats = {}
 
-    (start_loc, dist, previous) = pt
+    for (r, c), v in forward_graph.items():
+        #print(f"({r}, {c})")
+        for (rr, cc), vv in backward_graph.items():
+            dist = abs(rr - r) + abs(cc - c)
+            if 0 < dist <= cheat_size:
+                cheat_score = v[0] + vv[0] + dist
+                savings = base_score - cheat_score
 
-    for ii in range(i):
-        VV.remove(route[ii][0])
+                if savings > 0:
+                    cheats[(r, c, rr, cc)] = savings
 
-    print(f"Number of vertices to consider:  {len(VV)}")
+    return cheats
 
-    for dr, dc in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
-        rr, cc = r + dr, c + dc
+def count_cheats(cheats: dict, threshold: int) -> int:
+    """Count cheat number that reduce distance/time by an amount at least equal to 'threshold'."""
 
-        if rr not in [0, nrows-1] and cc not in [0, ncols-1] and (rr, cc) in O:
-            new_graph = dijkstra(VV.copy(), start_loc, dist, previous, (rr, cc))
-            if end in new_graph.keys():
-                new_time = new_graph[end][0]
-                cheats[(r, c), (rr, cc)] = new_time
+    savings = {}
+    for k, v in cheats.items():
+        if v in savings:
+            savings[v] += 1
+        else: 
+            savings[v] = 1
 
-# Aggregate distance/time improvement
-p1_counts = {}
-for k, v in cheats.items():
-    delta = orig_dist - v
-    if delta in p1_counts.keys():
-        p1_counts[delta] += 1
-    else:
-        p1_counts[delta] = 1
+    ct = 0
+    for k, v in savings.items():
+        if k >= threshold:
+            ct += v
 
-print("\nResults:")
-print("\nSavings     (count)")
-print("---------------")
-for k, v in dict(sorted(p1_counts.items(), reverse=True)).items():
-    print(f"{k:<10}  ({v})")
+    return ct
 
-p1 = 0
-for k, v in p1_counts.items():
-    if k >= 100:
-        p1 += v
 
+# Part 1:  Find number of cheats of length at most 2 that reduce solution path length/time by 100 units or more
+
+cheats_p1 = find_cheats(forward_graph, backward_graph, 2, original_score)
+
+p1 = count_cheats(cheats_p1, 100)
 print(f"\n{'Solution to Part 1:':<20} {p1}")
 
 
+# Part 2:  Now consider cheats of length up to 20
 
-# Part 2: Allow cheats up to 20 cells long 
+cheats_p2 = find_cheats(forward_graph, backward_graph, 20, original_score)
 
-
-#print(f"{'Solution to Part 2:':<20} {p2}")
+p2 = count_cheats(cheats_p2, 100)
+print(f"{'Solution to Part 2:':<20} {p2}")
