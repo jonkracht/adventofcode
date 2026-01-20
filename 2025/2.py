@@ -43,12 +43,13 @@ for r in ranges:
 
     # print("\nRange:  " + str(r))
 
-    if r[0] > r[1]:
-        raise AssertionError("Second element in range should be larger than first.")
+    assert (
+        r[1] >= r[0]
+    ), "Second element in range should be greater than or equal to first."
 
     for rr in range(r[0], r[1] + 1):
 
-        # Process unseen states
+        # Check unseen states
         if rr not in d1.keys():
             d1[rr] = p1_valid(rr)
         if rr not in d2.keys():
@@ -57,11 +58,12 @@ for r in ranges:
         if d1[rr] == False:
             # print(f"Adding {rr} to invalid.")
             not_valid_1.append(rr)
+
         if d2[rr] == False:
             not_valid_2.append(rr)
 
 p1 = sum(not_valid_1)
 p2 = sum(not_valid_2)
 
-print(f"{'Solution to Part 1:':<20} {p1}")
-print(f"{'Solution to Part 2:':<20} {p2}")
+print(f"\n{'Solution to Part 1:':<20} {p1}")
+print(f"\n{'Solution to Part 2:':<20} {p2}")
