@@ -1,8 +1,19 @@
+
+'''
+# Problem description
+
+## Part 1  
+
+## Part 2  
+
+'''
+
+
 import sys
+
 
 infile = sys.argv[1] if len(sys.argv) >= 2 else "./inputs/1.in"
 
-# raw = open(infile).read().strip()
 input = open(infile).read().strip()
 
 print(input)
