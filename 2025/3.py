@@ -1,4 +1,6 @@
 '''
+https://adventofcode.com/2025/day/3
+
 # Problem description
 ## Part 1  
 Find the largest two digit number that can be made from a string of digits preserving order.
