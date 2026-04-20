@@ -2,7 +2,7 @@
 # Problem description
 
 ## Part 1  
-Traverse a "maze" top-to-bottom.  When an obstacle is encountered, split.  Count how many total times a split occurs over the course oftraveling the maze.
+Traverse a "maze" top-to-bottom.  When an obstacle is encountered, split.  Count how many total times a split occurs over the course of traveling the maze.
 
 
 ## Part 2  
@@ -30,25 +30,25 @@ splits = 0
 for i, row in enumerate(input):
     if i > 0:
         temp = set()
-        for l in locs[i - 1]:
-            if row[l] == ".":
-                temp.add(l)
-            elif row[l] == "^":
+        for loc in locs[i - 1]:
+            if row[loc] == ".":
+                temp.add(loc)
+            elif row[loc] == "^":  # split
                 splits += 1
-                temp.add(l - 1)
-                temp.add(l + 1)
+                temp.add(loc - 1)
+                temp.add(loc + 1)
             else:
-                raise ValueError(f"Unexpected value:  {row[l]}")
+                raise ValueError(f"Unexpected value:  {row[loc]}")
 
         locs.append(temp)
 
 print(f"{'Solution to Part 1:':<20} {splits}")
 
 
-## Part 2 solution
-nodes = (
-    {}
-)  # nested dictionary whose keys are rows and values are dictionaries of how many routes pass through the point (row/col)
+# Part 2 solution
+
+# Create a nested dictionary
+nodes = {}
 
 for i, row in enumerate(input):
 
