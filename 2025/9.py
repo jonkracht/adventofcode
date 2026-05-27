@@ -23,7 +23,7 @@ import sys
 
 logging.basicConfig(level=logging.WARNING)
 
-infile = sys.argv[1] if len(sys.argv) >= 2 else "./inputs/9.in"
+infile = sys.argv[1] if len(sys.argv) >= 2 else "./inputs/9.in2"
 
 vertices = open(infile).read().strip().split("\n")
 vertices = [tuple(int(ii) for ii in i.split(",")) for i in vertices]
@@ -48,140 +48,84 @@ for id1 in range(len(vertices)):
 print(f"{'Solution to Part 1:':<20} {p1_best}")
 
 
-# Part 2 solution:
+# Part 2 solution
+edges, walls, edge_pts = [], {}, set()
 
-# Construct a list of lists containing each edge's vertex points
-edges = []
 for i, _ in enumerate(vertices):
-    if i < len(vertices) - 1:
-        edges.append([vertices[i], vertices[i+1]])
+    if i == len(vertices) - 1:
+        p1, p2 = vertices[i], vertices[0]
     else:
-        edges.append([vertices[i], vertices[0]])
+        p1, p2 = vertices[i], vertices[i+1]
 
-print("\nEdges:")
-for e in edges:
+    edge = (p1, p2)
+    edges.append(edge)
+
+    # Construct list of boundary points (vertex + edge)
+
+    if p1[0] == p2[0]:
+        delta = p2[1] - p1[1]
+        dx, dy = 0, int(delta / abs(delta))
+    else:
+        delta = p2[0] - p1[0]
+        dx, dy = int(delta / abs(delta)), 0
+
+    new_pt = p1
+    while new_pt != p2:
+        new_pt = (new_pt[0] + dx, new_pt[1] + dy)
+        edge_pts.add(new_pt)
+        print(f"Added point {new_pt}")
+
+    if p1[0] == p2[0]:
+        xval = p1[0]
+        miny, maxy = min(p1[1], p2[1]), max(p1[1], p2[1])
+
+        for ii in range(miny + 1, maxy):
+            if ii not in walls:
+                walls[ii] = [xval]
+            else:
+                walls[ii].append(xval)
+
+# Sort walls dictionary by key
+walls = dict(sorted(walls.items()))
+for k, v in walls.items():
+    print(k, v)
+
+
+'''
+print("\nEdge points:\n")
+for e in boundary_pts:
     print(e)
-
-print(f"\nNumber of edges:  {len(edges)}")
-print(f"Number of vertices:  {len(vertices)}")
-
-
-# Construct list of edge points
-edge_points = []
-for edge in edges:
-    pt1, pt2 = edge
-    print(pt1, pt2)
-    if pt1[0] == pt2[0]:
-        dx, dy = 0, int((pt2[1] - pt1[1]) / abs(pt2[1] - pt1[1]))
-    else:
-        dx, dy = int((pt2[0] - pt1[0]) / abs(pt2[0] - pt1[0])), 0
-
-    test_pt = (pt1[0] + dx, pt1[1] + dy)
-    while test_pt != pt2:
-        edge_points.append(test_pt)
-        test_pt = (test_pt[0] + dx, test_pt[1] + dy)
-
-
-print(f"\nEdge points:\n{edge_points}")
-
-
-interior = []
+'''
 
 x, y = zip(*vertices)
+interior = []
 
-print(f"Creating points:  x:[{min(x)}, {max(x)}], y:[{min(y)}, {max(y)}]")
-points = [(xx, yy) for xx in range(min(x), max(x) + 1)
-          for yy in range(min(y), max(y) + 1)]
+for xx in range(min(x), max(x) + 1):
+    for yy in range(min(y), max(y) + 1):
 
-for v in vertices:
-    points.remove(v)
-for e in edge_points:
-    points.remove(e)
+        pt = (xx, yy)
+        print(f"Checking point {pt}")
 
-for point in points:
-    print(point)
+        if pt not in edge_pts:
+            if yy in walls:
+                ct = sum(val > xx for val in walls[yy])
 
-    # print(f"\nChecking point {point}\n")
+                if ct % 2 != 0:
+                    interior.append(pt)
+interior.sort()
 
-    if point in vertices:
-        # print(f"Found point {point} in 'vertices'.")
-        continue
-    elif point in edge_points:
-        # print(f"Found point {point} in 'edge_points'.")
-        continue
-    else:
-        # print(f"Point {point} is not a vertex or edge.")
+print("\nInterior points:")
+for i in interior:
+    print(i)
 
-        intersections = 0
-
-        for edge in edges:
-            # print(f"Checking edge {edge}")
-
-            # Skip horizontal edges
-            if edge[0][1] == edge[1][1]:
-                continue
-
-            id1 = min(edge[0][1], edge[1][1])
-            id2 = max(edge[0][1], edge[1][1])
-
-            # print(f"IDS:  {id1}  {id2}")
-
-            if id1 < point[1] < id2 and point[0] < edge[0][0] and point[0] < edge[1][0]:
-                # print("Intersection")
-                intersections += 1
-
-        # print(f"\n{intersections} intersections found.")
-
-        if intersections % 2 != 0:
-            # print(f"{point} is an interior point!.")
-            interior.append(point)
-        else:
-            pass
-            # print(f"{point} is not an interior point.")
-
-print(f"Interior points:\n{interior}")
-
-all_colored_tiles = set(vertices + edge_points + interior)
-print(f"\nAll colored tiles:\n{all_colored_tiles}")
-
-
-# Plot vertices, edges and interior points
-a, b = zip(*vertices)
-plt.scatter(a, b, marker='o')
-c, d = zip(*edge_points)
-plt.scatter(c, d, marker='.')
-e, f = zip(*interior)
-plt.scatter(e, f, marker='x')
-
+# plt.scatter(x, y)
+c, d = zip(*interior)
+plt.scatter(c, d)
+e, f = zip(*edge_pts)
+plt.scatter(e, f)
 plt.show()
 
 
-# Process vertex pairs to find largest color rectangle
-
 p2_best = 0
-for i, _ in enumerate(vertices):
-    corner1 = vertices[i]
-    for ii in range(i):
-        corner2 = vertices[ii]
 
-        print(f"Comparing corner {corner1} and {corner2}.")
-
-        x, y = zip(*[corner1, corner2])
-        rectangle_points = [(xx, yy) for xx in list(range(min(x), max(x) + 1))
-                            for yy in list(range(min(y), max(y) + 1))]
-
-        all_tiles_colored = True
-        for r in rectangle_points:
-            if r not in all_colored_tiles:
-                all_tiles_colored = False
-                break
-
-        if all_tiles_colored:
-            new_size = len(rectangle_points)
-            if new_size > p2_best:
-                print(f"Found new best using {
-                      corner1} and {corner2}:  {new_size}")
-                p2_best = new_size
-
-
-print(f"{'Solution to Part 2:':<20} {p2_best}")
+print(f"\n{'Solution to Part 2:':<20} {p2_best}")
