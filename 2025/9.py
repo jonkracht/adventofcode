@@ -49,19 +49,20 @@ print(f"{'Solution to Part 1:':<20} {p1_best}")
 
 
 # Part 2 solution
-edges, walls, edge_pts = [], {}, set()
-
+edges, walls, edge_pts = set(), {}, set()
+A = []
 for i, _ in enumerate(vertices):
+
+    # Construct 'edges' list of point tuples
     if i == len(vertices) - 1:
         p1, p2 = vertices[i], vertices[0]
     else:
         p1, p2 = vertices[i], vertices[i+1]
 
     edge = (p1, p2)
-    edges.append(edge)
+    edges.add(edge)
 
     # Construct list of boundary points (vertex + edge)
-
     if p1[0] == p2[0]:
         delta = p2[1] - p1[1]
         dx, dy = 0, int(delta / abs(delta))
@@ -69,9 +70,13 @@ for i, _ in enumerate(vertices):
         delta = p2[0] - p1[0]
         dx, dy = int(delta / abs(delta)), 0
 
+    # Add points sequentially from p1 until p2 is reached
     new_pt = p1
-    while new_pt != p2:
+    while True:
         new_pt = (new_pt[0] + dx, new_pt[1] + dy)
+        if new_pt == p2:
+            break
+
         edge_pts.add(new_pt)
         print(f"Added point {new_pt}")
 
@@ -84,48 +89,56 @@ for i, _ in enumerate(vertices):
                 walls[ii] = [xval]
             else:
                 walls[ii].append(xval)
+    else:
+        A.append((max(p1[0], p2[0]), p1[1]))
 
-# Sort walls dictionary by key
-walls = dict(sorted(walls.items()))
-for k, v in walls.items():
-    print(k, v)
+print(f"\nEdges:\n{edges}")
 
+print(f"\nEdge points:\n{edge_pts}")
 
-'''
-print("\nEdge points:\n")
-for e in boundary_pts:
-    print(e)
-'''
+Q = {}
+for e in edge_pts:
+    if e[1] in Q:
+        Q[e[1]].append(e[0])
+    else:
+        Q[e[1]] = [e[0]]
 
-x, y = zip(*vertices)
+edge_pt_dict = {}
+for k, v in dict(sorted(Q.items())).items():
+    edge_pt_dict[k] = sorted(v)
+
+print(f"Edge point dict:\n{edge_pt_dict}")
+
 interior = []
+for y in range(min(edge_pt_dict.keys()), max(edge_pt_dict.keys())):
+    print(f"Y={y}")
 
-for xx in range(min(x), max(x) + 1):
-    for yy in range(min(y), max(y) + 1):
+    for x in range(min(edge_pt_dict[y]), max(edge_pt_dict[y]) + 1):
+        print(f"Checking point ({x}, {y})")
 
-        pt = (xx, yy)
-        print(f"Checking point {pt}")
+        if (x, y) in vertices or (x, y) in edge_pts:
+            continue
 
-        if pt not in edge_pts:
-            if yy in walls:
-                ct = sum(val > xx for val in walls[yy])
+        count = 0
+        for edge in edges:
+            if x < edge[0][0]:
+                if edge[0][1] < y <= edge[1][1] or edge[1][1] < y <= edge[0][1]:
+                    count += 1
 
-                if ct % 2 != 0:
-                    interior.append(pt)
-interior.sort()
+        if count % 2 != 0:
+            point = (x, y)
+            print("Found interior point")
+            interior.append(point)
 
-print("\nInterior points:")
-for i in interior:
-    print(i)
+print(interior)
 
-# plt.scatter(x, y)
-c, d = zip(*interior)
-plt.scatter(c, d)
-e, f = zip(*edge_pts)
-plt.scatter(e, f)
+a, b = zip(*vertices)
+plt.scatter(a, b, marker='s')
+c, d = zip(*edge_pts)
+plt.scatter(c, d, marker='.')
+g, h = zip(*interior)
+plt.scatter(g, h, marker='o')
 plt.show()
-
-
 p2_best = 0
 
 print(f"\n{'Solution to Part 2:':<20} {p2_best}")
